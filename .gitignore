@@ -1,0 +1,6 @@
+reacjira
+*.test
+.idea
+vendor
+config.secret.toml
+.vscode
