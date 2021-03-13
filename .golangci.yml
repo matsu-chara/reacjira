@@ -1,0 +1,3 @@
+run:
+  skip-files:
+    - slack/messenger.go # ignore deprecated error
