@@ -1,0 +1,3 @@
+reacjiras = [
+    {emoji = "test_task", project = "TEST", issue_type = "タスク", description="created from reacjira."}
+]
