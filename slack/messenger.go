@@ -50,10 +50,6 @@ func (messenger *Messenger) SearchMsg(channel string, timestamp string) (*slack.
 	return &result[0], nil
 }
 
-func (messenger *Messenger) SearchReply(channel string, threadTimestamp string) ([]slack.Message, error) {
-	return messenger.rtm.GetChannelReplies(channel, threadTimestamp)
-}
-
 func (messenger *Messenger) SearchUser(userId string) (*slack.User, error) {
 	return messenger.rtm.GetUserInfo(userId)
 }
