@@ -1,14 +1,9 @@
-ci: clean devdeps lint build test
-
 clean:
 	go clean
 	rm -f reacjira
 
-devdeps:
-	go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
-
 lint:
-	golangci-lint run
+	docker run --rm -v $$(pwd):/app -w /app golangci/golangci-lint:v1.38.0 golangci-lint run ./...
 
 build:
 	go build
