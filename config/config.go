@@ -1,10 +1,10 @@
 package config
 
 import (
-	"fmt"
 	"log"
 
 	toml "github.com/sioncojp/tomlssm"
+	"golang.org/x/xerrors"
 )
 
 type Config struct {
@@ -23,7 +23,7 @@ func LoadConfigToml(filename string) (*Config, error) {
 
 	var config Config
 	if _, err := toml.DecodeFile(filename, &config, "ap-northeast-1"); err != nil {
-		return nil, fmt.Errorf("failed to load config toml from %s: %w", filename, err)
+		return nil, xerrors.Errorf("failed to load config toml from %s: %w", filename, err)
 	}
 
 	return &config, nil

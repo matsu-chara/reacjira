@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/andygrunwald/go-jira"
+	"golang.org/x/xerrors"
 )
 
 type MyJira struct {
@@ -33,7 +34,7 @@ func (myjira *MyJira) CreateTicket(
 	}
 	jiraClient, err := jira.NewClient(tp.Client(), base)
 	if err != nil {
-		return nil, fmt.Errorf("error. during jiraClient. error=%s", err.Error())
+		return nil, xerrors.Errorf("error. during jiraClient. error=%s", err.Error())
 	}
 
 	reporters, res, err := myjira.neoFindUserByEmail(jiraClient, reporterEmail)
@@ -48,7 +49,7 @@ func (myjira *MyJira) CreateTicket(
 		return nil, err
 	}
 	if len(reporters) != 1 {
-		err = fmt.Errorf("error. found multiple users on email address search. len=%d", len(reporters))
+		err = xerrors.Errorf("error. found multiple users on email address search. len=%d", len(reporters))
 		return nil, err
 	}
 

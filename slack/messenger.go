@@ -1,9 +1,8 @@
 package slack
 
 import (
-	"fmt"
-
 	"github.com/slack-go/slack"
+	"golang.org/x/xerrors"
 )
 
 // Messenger handle slack rtm
@@ -44,7 +43,7 @@ func (messenger *Messenger) SearchMsg(channel string, timestamp string) (*slack.
 		return nil, err
 	}
 	if len(result) != 1 {
-		return nil, fmt.Errorf("slack search with channel=%s, ts=%s. but result length is %d", channel, timestamp, len(result))
+		return nil, xerrors.Errorf("slack search with channel=%s, ts=%s. but result length is %d", channel, timestamp, len(result))
 	}
 
 	return &result[0], nil

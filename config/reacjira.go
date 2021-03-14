@@ -1,10 +1,10 @@
 package config
 
 import (
-	"fmt"
 	"log"
 
 	toml "github.com/sioncojp/tomlssm"
+	"golang.org/x/xerrors"
 )
 
 type reacjiras struct {
@@ -24,7 +24,7 @@ func LoadReacjiraToml(filename string) ([]Reacjira, error) {
 
 	var reacjiras reacjiras
 	if _, err := toml.DecodeFile(filename, &reacjiras, "ap-northeast-1"); err != nil {
-		return nil, fmt.Errorf("failed to load reacjira toml from %s: %w", filename, err)
+		return nil, xerrors.Errorf("failed to load reacjira toml from %s: %w", filename, err)
 	}
 
 	return reacjiras.Reacjiras, nil

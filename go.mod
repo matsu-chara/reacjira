@@ -15,5 +15,6 @@ require (
 	github.com/trivago/tgo v1.0.7 // indirect
 	golang.org/x/net v0.0.0-20190923162816-aa69164e4478 // indirect
 	golang.org/x/text v0.3.2 // indirect
+	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 	gopkg.in/yaml.v2 v2.2.8 // indirect
 )
