@@ -5,12 +5,12 @@ import (
 	"golang.org/x/xerrors"
 )
 
-// an implementation of myJira using go-jira
-type myJiraImpl struct {
+// a jira client wrapper which uses go-jira
+type MyJiraClient struct {
 	underlying *gojira.Client
 }
 
-func createMyJira(apiHost string, apiEmail string, apiToken string) (myJira, error) {
+func New(apiHost string, apiEmail string, apiToken string) (*MyJiraClient, error) {
 	tp := gojira.BasicAuthTransport{
 		Username: apiEmail,
 		Password: apiToken,
@@ -21,6 +21,6 @@ func createMyJira(apiHost string, apiEmail string, apiToken string) (myJira, err
 		return nil, xerrors.Errorf("an error occurred: %w", err)
 	}
 
-	myJiraImpl := myJiraImpl{jiraClient}
-	return &myJiraImpl, nil
+	myJiraClient := MyJiraClient{jiraClient}
+	return &myJiraClient, nil
 }

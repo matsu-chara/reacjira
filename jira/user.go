@@ -5,8 +5,12 @@ import (
 	"golang.org/x/xerrors"
 )
 
-func (myJiraImpl *myJiraImpl) FindUserByEmail(email string) (*gojira.User, error) {
-	users, resp, err := myJiraImpl.underlying.User.Find(email)
+type User struct {
+	user gojira.User
+}
+
+func (myJiraClient *MyJiraClient) FindUserByEmail(email string) (*User, error) {
+	users, resp, err := myJiraClient.underlying.User.Find(email)
 	if err != nil {
 		return nil, xerrors.Errorf("an error occurred: %w", gojira.NewJiraError(resp, err))
 	}
@@ -18,5 +22,5 @@ func (myJiraImpl *myJiraImpl) FindUserByEmail(email string) (*gojira.User, error
 		err = xerrors.Errorf("an error occurred. multiple users were found on the email address search. len=%d", len(users))
 		return nil, err
 	}
-	return &users[0], nil
+	return &User{users[0]}, nil
 }

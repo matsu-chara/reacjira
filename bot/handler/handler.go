@@ -7,15 +7,16 @@ import (
 	"strings"
 
 	"github.com/slack-go/slack"
+	"golang.org/x/xerrors"
 
 	"reacjira/config"
-	myjira "reacjira/jira"
+	"reacjira/service"
 	myslack "reacjira/slack"
 )
 
 type CommandHandler struct {
 	slackMessenger *myslack.Messenger
-	jira           *myjira.MyJira
+	jira           *service.MyJiraService
 	slackCtx       config.SlackCtx
 	botProfile     config.Profile
 	reacjiras      []config.Reacjira
@@ -27,14 +28,19 @@ func NewCommandHandler(
 	jiraCtx config.JiraCtx,
 	botProfile config.Profile,
 	reacjiras []config.Reacjira,
-) *CommandHandler {
-	return &CommandHandler{
-		myslack.New(rtm),
-		myjira.New(jiraCtx.Host, jiraCtx.Email, jiraCtx.Token),
-		slackCtx,
-		botProfile,
-		reacjiras,
+) (*CommandHandler, error) {
+	jira, err := service.NewJira(jiraCtx.Host, jiraCtx.Email, jiraCtx.Token)
+	if err != nil {
+		return nil, xerrors.Errorf("failed to initialize service.MyJiraService: %w", err)
 	}
+
+	return &CommandHandler{
+		slackMessenger: myslack.New(rtm),
+		jira:           jira,
+		slackCtx:       slackCtx,
+		botProfile:     botProfile,
+		reacjiras:      reacjiras,
+	}, nil
 }
 
 func (commandHandler *CommandHandler) HandleCommand(ev *slack.ReactionAddedEvent) {
@@ -113,21 +119,24 @@ at: %s
 	log.Printf("reporter:%s, channel: %s, title: %s", reporter.Name, channel.Name, title)
 
 	log.Printf("attempt to create a ticket.")
-	ticket, err := commandHandler.jira.CreateTicket(
-		reacjira.Project,
-		reacjira.IssueType,
-		reacjira.EpicKey,
-		reporter.Profile.Email,
-		title,
-		description,
-	)
+	ticketRequest := service.TicketRequest{
+		Project:       reacjira.Project,
+		IssueType:     reacjira.IssueType,
+		EpicKey:       reacjira.EpicKey,
+		ReporterEmail: reporter.Profile.Email,
+		Title:         title,
+		Description:   description,
+	}
+	ticketURL, err := commandHandler.jira.CreateTicket(ticketRequest)
+	log.Println("an ticket has been created: " + ticketURL)
+
 	if err != nil {
 		log.Printf("createTicket error: %+v", err)
 		commandHandler.slackMessenger.SendMessages([]string{err.Error()}, ev.Item.Channel, replyTo)
 		return
 	}
 
-	commandHandler.slackMessenger.SendMessages([]string{*ticket}, ev.Item.Channel, replyTo)
+	commandHandler.slackMessenger.SendMessages([]string{ticketURL}, ev.Item.Channel, replyTo)
 }
 
 func findMessage(slackMessenger *myslack.Messenger, ev *slack.ReactionAddedEvent) (*slack.Message, error) {
