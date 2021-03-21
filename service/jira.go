@@ -17,7 +17,7 @@ type MyJiraService struct {
 // an interface of a jira client wrapper
 type myJira interface {
 	FindUserByEmail(email string) (*jira.User, error)
-	FindEpicIDByEpicKey(epicKey string) (*jira.Epic, error) // returns an EpicId( = Issue.ID) as a string
+	FindEpicIDByEpicKey(epicKey string) (*jira.Epic, error)
 	CreateIssue(request jira.IssueRequest) (*jira.Issue, error)
 }
 
