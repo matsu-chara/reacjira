@@ -153,7 +153,7 @@ func findMessage(slackMessenger *myslack.Messenger, ev *slack.ReactionAddedEvent
 func getPermLink(slackMessenger *myslack.Messenger, ev *slack.ReactionAddedEvent, msg *slack.Message) (string, error) {
 	link, err := slackMessenger.GetPermLink(ev.Item.Channel, msg.Timestamp)
 	if err != nil {
-		log.Println("getPermLink error: %+v", err)
+		log.Printf("getPermLink error: %+v", err)
 		return "", err
 	}
 
