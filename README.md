@@ -6,7 +6,7 @@ reacjira = emoji reaction + jira ticket create
 
 ### prepare
 
-add a configuration like `{emoji = "test_task", project = "TEST", issue_type = "タスク", description="created from reacjira."}` to `reacjira.toml`.
+add a configuration like `{emoji = "test_task", project = "TEST", issue_type = "タスク", epic_key="FOO-1234", description="created from reacjira."}` to `reacjira.toml`.
 
 ### creating jira tickets
 

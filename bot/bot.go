@@ -27,18 +27,20 @@ func Run(api *slack.Client, slackCtx config.SlackCtx, jiraCtx config.JiraCtx, re
 			log.Print("hello")
 		case *slack.ConnectedEvent:
 			log.Print("connected")
-			bot = &Bot{
-				commandHandler: handler.NewCommandHandler(
-					rtm,
-					slackCtx,
-					jiraCtx,
-					config.Profile{
-						ID:   ev.Info.User.ID,
-						Name: ev.Info.User.Name,
-					},
-					reacjiras,
-				),
+			handler, err := handler.NewCommandHandler(
+				rtm,
+				slackCtx,
+				jiraCtx,
+				config.Profile{
+					ID:   ev.Info.User.ID,
+					Name: ev.Info.User.Name,
+				},
+				reacjiras,
+			)
+			if err != nil {
+				log.Fatalf("an error occurred while initilizing CommandHandler. %+v", err)
 			}
+			bot = &Bot{commandHandler: handler}
 		case *slack.InvalidAuthEvent:
 			log.Printf("Invalid credentials. %v", ev)
 			return 1
