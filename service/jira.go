@@ -7,26 +7,26 @@ import (
 	"golang.org/x/xerrors"
 )
 
-type MyJiraService struct {
+type JiraService struct {
 	host   string
 	email  string
 	token  string
-	client myJira
+	client jiraClient
 }
 
-// an interface of a jira client wrapper
-type myJira interface {
+// an interface of a jira client
+type jiraClient interface {
 	FindUserByEmail(email string) (*jira.User, error)
 	FindEpicIDByEpicKey(epicKey string) (*jira.Epic, error)
 	CreateIssue(request jira.IssueRequest) (*jira.Issue, error)
 }
 
-func NewJira(host string, email string, token string) (*MyJiraService, error) {
-	jira, err := jira.New(host, email, token)
+func NewJira(host string, email string, token string) (*JiraService, error) {
+	client, err := jira.New(host, email, token)
 	if err != nil {
 		return nil, xerrors.Errorf("an error occurred: %w", err)
 	}
-	return &MyJiraService{host, email, token, jira}, nil
+	return &JiraService{host, email, token, client}, nil
 }
 
 type TicketRequest struct {
@@ -50,35 +50,35 @@ func (ticketRequest TicketRequest) toIssueRequest(reporter *jira.User, epic *jir
 }
 
 // CreateTicket creates a jira ticket and returns the URL of the created ticket
-func (myjiraService *MyJiraService) CreateTicket(ticketRequest TicketRequest) (string, error) {
-	reporter, err := myjiraService.client.FindUserByEmail(ticketRequest.ReporterEmail)
+func (jiraService *JiraService) CreateTicket(ticketRequest TicketRequest) (string, error) {
+	reporter, err := jiraService.client.FindUserByEmail(ticketRequest.ReporterEmail)
 	if err != nil {
 		return "", xerrors.Errorf("an error occurred in FindUserByEmail: %w", err)
 	}
 
-	epicID, err := myjiraService.performEpicIdSearchOptional(ticketRequest.EpicKey)
+	epicID, err := jiraService.performEpicIdSearchOptional(ticketRequest.EpicKey)
 	if err != nil {
 		return "", xerrors.Errorf("an error occurred in performEpicIdSearchOptional: %w", err)
 	}
 
 	issueReq := ticketRequest.toIssueRequest(reporter, epicID)
-	issue, err := myjiraService.client.CreateIssue(issueReq)
+	issue, err := jiraService.client.CreateIssue(issueReq)
 	if err != nil {
 		return "", xerrors.Errorf("an error occurred in CreateIssue: %w", err)
 	}
 
-	ticketURL := fmt.Sprintf("%s/browse/%s", myjiraService.host, issue.Key)
+	ticketURL := fmt.Sprintf("%s/browse/%s", jiraService.host, issue.Key)
 	return ticketURL, nil
 }
 
 // performEpicIdSearchOptional performs an epicId search only if an epic key is specified.
 // this method may return (nil, nil) as a normal scenario when the epicKey was an empty string.
-func (myjiraService *MyJiraService) performEpicIdSearchOptional(epicKey string) (*jira.Epic, error) {
+func (jiraService *JiraService) performEpicIdSearchOptional(epicKey string) (*jira.Epic, error) {
 	if epicKey == "" {
 		return nil, nil
 	}
 
-	epicID, err := myjiraService.client.FindEpicIDByEpicKey(epicKey)
+	epicID, err := jiraService.client.FindEpicIDByEpicKey(epicKey)
 	if err != nil {
 		return nil, xerrors.Errorf("an error occurred in FindEpicIDByEpicKey: %w", err)
 	}

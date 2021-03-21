@@ -10,8 +10,8 @@ type Epic struct {
 }
 
 // FindEpicIdByEpicKey returns an epicID which is parent Issue.ID
-func (myJiraClient *MyJiraClient) FindEpicIDByEpicKey(epicKey string) (*Epic, error) {
-	issue, resp, err := myJiraClient.underlying.Issue.Get(epicKey, nil)
+func (jiraClient *JiraClient) FindEpicIDByEpicKey(epicKey string) (*Epic, error) {
+	issue, resp, err := jiraClient.underlying.Issue.Get(epicKey, nil)
 	if err != nil {
 		return nil, xerrors.Errorf("an error occurred while searching for an issue with %s as an epicKey: %w", epicKey, gojira.NewJiraError(resp, err))
 	}

@@ -6,11 +6,11 @@ import (
 )
 
 // a jira client wrapper which uses go-jira
-type MyJiraClient struct {
+type JiraClient struct {
 	underlying *gojira.Client
 }
 
-func New(apiHost string, apiEmail string, apiToken string) (*MyJiraClient, error) {
+func New(apiHost string, apiEmail string, apiToken string) (*JiraClient, error) {
 	if apiHost == "" {
 		return nil, xerrors.Errorf("an error occurred. an apiHost was empty")
 	}
@@ -26,11 +26,11 @@ func New(apiHost string, apiEmail string, apiToken string) (*MyJiraClient, error
 		Password: apiToken,
 	}
 
-	jiraClient, err := gojira.NewClient(tp.Client(), apiHost)
+	gojiraClient, err := gojira.NewClient(tp.Client(), apiHost)
 	if err != nil {
 		return nil, xerrors.Errorf("an error occurred while creating the go-jira client: %w", err)
 	}
 
-	myJiraClient := MyJiraClient{jiraClient}
-	return &myJiraClient, nil
+	jiraClient := JiraClient{gojiraClient}
+	return &jiraClient, nil
 }

@@ -47,13 +47,13 @@ func fromGoJiraIssue(issue *gojira.Issue) *Issue {
 }
 
 // FindEpicIdByEpicKey returns an epicId which is parent Issue.ID
-func (myJiraClient *MyJiraClient) CreateIssue(request IssueRequest) (*Issue, error) {
+func (jiraClient *JiraClient) CreateIssue(request IssueRequest) (*Issue, error) {
 	issueRequest, err := request.toGoJiraRequest()
 	if err != nil {
 		return nil, xerrors.Errorf("an error occurred while creating a GoJiraRequest: %w", err)
 	}
 
-	issue, resp, err := myJiraClient.underlying.Issue.Create(issueRequest)
+	issue, resp, err := jiraClient.underlying.Issue.Create(issueRequest)
 	if err != nil {
 		return nil, xerrors.Errorf("an error occurred while creating an issue: %w", gojira.NewJiraError(resp, err))
 	}

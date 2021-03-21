@@ -9,8 +9,8 @@ type User struct {
 	user gojira.User
 }
 
-func (myJiraClient *MyJiraClient) FindUserByEmail(email string) (*User, error) {
-	users, resp, err := myJiraClient.underlying.User.Find(email)
+func (jiraClient *JiraClient) FindUserByEmail(email string) (*User, error) {
+	users, resp, err := jiraClient.underlying.User.Find(email)
 	if err != nil {
 		return nil, xerrors.Errorf("an error occurred: %w", gojira.NewJiraError(resp, err))
 	}

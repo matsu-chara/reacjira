@@ -16,7 +16,7 @@ import (
 
 type CommandHandler struct {
 	slackMessenger *myslack.Messenger
-	jira           *service.MyJiraService
+	jira           *service.JiraService
 	slackCtx       config.SlackCtx
 	botProfile     config.Profile
 	reacjiras      []config.Reacjira
