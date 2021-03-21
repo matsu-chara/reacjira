@@ -1,4 +1,5 @@
 FROM golang:1.16.0-alpine as builder
+MAINTAINER matsu-chara <matsuy00@gmail.com>
 
 WORKDIR /opt/reacjira
 
