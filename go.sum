@@ -2,6 +2,8 @@ github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/andygrunwald/go-jira v1.11.2-0.20200414185502-8c77107df375 h1:32hLMa5VtwCatQLLxq6dFa3jIkCjkxSKhuSRMXIHdqw=
 github.com/andygrunwald/go-jira v1.11.2-0.20200414185502-8c77107df375/go.mod h1:jYi4kFDbRPZTJdJOVJO4mpMMIwdB+rcZwSO58DzPd2I=
+github.com/andygrunwald/go-jira v1.13.0 h1:vvIImGgX32bHfoiyUwkNo+/YrPnRczNarvhLOncP6dE=
+github.com/andygrunwald/go-jira v1.13.0/go.mod h1:jYi4kFDbRPZTJdJOVJO4mpMMIwdB+rcZwSO58DzPd2I=
 github.com/aws/aws-sdk-go v1.20.11 h1:xDc2f/8KmwPW7WkuB0kDUCEP4jpx1PIMMMZkav6cbU4=
 github.com/aws/aws-sdk-go v1.20.11/go.mod h1:KmX6BPdI08NWTb3/sm4ZGu5ShLoqVDhKgpiN924inxo=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
