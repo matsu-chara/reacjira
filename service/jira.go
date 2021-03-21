@@ -22,11 +22,11 @@ type myJira interface {
 }
 
 func NewJira(host string, email string, token string) (*MyJiraService, error) {
-	jiraClient, err := jira.New(host, email, token)
+	jira, err := jira.New(host, email, token)
 	if err != nil {
 		return nil, xerrors.Errorf("an error occurred: %w", err)
 	}
-	return &MyJiraService{host, email, token, jiraClient}, nil
+	return &MyJiraService{host, email, token, jira}, nil
 }
 
 type TicketRequest struct {
@@ -56,9 +56,9 @@ func (myjiraService *MyJiraService) CreateTicket(ticketRequest TicketRequest) (s
 		return "", xerrors.Errorf("an error occurred in FindUserByEmail: %w", err)
 	}
 
-	epicID, err := myjiraService.performEpicIdSearch(ticketRequest.EpicKey)
+	epicID, err := myjiraService.performEpicIdSearchOptional(ticketRequest.EpicKey)
 	if err != nil {
-		return "", xerrors.Errorf("an error occurred in performEpicIdSearch: %w", err)
+		return "", xerrors.Errorf("an error occurred in performEpicIdSearchOptional: %w", err)
 	}
 
 	issueReq := ticketRequest.toIssueRequest(reporter, epicID)
@@ -71,8 +71,9 @@ func (myjiraService *MyJiraService) CreateTicket(ticketRequest TicketRequest) (s
 	return ticketURL, nil
 }
 
-// performEpicIdSearchWhenSpecified performs an epicId search only if an epic key is specified.
-func (myjiraService *MyJiraService) performEpicIdSearch(epicKey string) (*jira.Epic, error) {
+// performEpicIdSearchOptional performs an epicId search only if an epic key is specified.
+// this method may return (nil, nil) as a normal scenario when the epicKey was an empty string.
+func (myjiraService *MyJiraService) performEpicIdSearchOptional(epicKey string) (*jira.Epic, error) {
 	if epicKey == "" {
 		return nil, nil
 	}
