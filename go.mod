@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
-	github.com/andygrunwald/go-jira v1.11.2-0.20200414185502-8c77107df375
+	github.com/andygrunwald/go-jira v1.13.0
 	github.com/aws/aws-sdk-go v1.20.11 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
