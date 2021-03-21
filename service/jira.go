@@ -7,10 +7,14 @@ import (
 	"golang.org/x/xerrors"
 )
 
+type JiraConfig struct {
+	Host  string
+	Email string
+	Token string
+}
+
 type JiraService struct {
-	host   string
-	email  string
-	token  string
+	config JiraConfig
 	client jiraClient
 }
 
@@ -21,12 +25,12 @@ type jiraClient interface {
 	CreateIssue(request jira.IssueRequest) (*jira.Issue, error)
 }
 
-func NewJira(host string, email string, token string) (*JiraService, error) {
-	client, err := jira.New(host, email, token)
+func NewJira(config JiraConfig) (*JiraService, error) {
+	client, err := jira.New(config.Host, config.Email, config.Token)
 	if err != nil {
 		return nil, xerrors.Errorf("an error occurred: %w", err)
 	}
-	return &JiraService{host, email, token, client}, nil
+	return &JiraService{config, client}, nil
 }
 
 type TicketRequest struct {
@@ -67,7 +71,7 @@ func (jiraService *JiraService) CreateTicket(ticketRequest TicketRequest) (strin
 		return "", xerrors.Errorf("an error occurred in CreateIssue: %w", err)
 	}
 
-	ticketURL := fmt.Sprintf("%s/browse/%s", jiraService.host, issue.Key)
+	ticketURL := fmt.Sprintf("%s/browse/%s", jiraService.config.Host, issue.Key)
 	return ticketURL, nil
 }
 
