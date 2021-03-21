@@ -11,6 +11,16 @@ type MyJiraClient struct {
 }
 
 func New(apiHost string, apiEmail string, apiToken string) (*MyJiraClient, error) {
+	if apiHost == "" {
+		return nil, xerrors.Errorf("an error occurred. an apiHost was empty")
+	}
+	if apiEmail == "" {
+		return nil, xerrors.Errorf("an error occurred. an apiEmail was empty")
+	}
+	if apiToken == "" {
+		return nil, xerrors.Errorf("an error occurred. an apiToken was empty")
+	}
+
 	tp := gojira.BasicAuthTransport{
 		Username: apiEmail,
 		Password: apiToken,
@@ -18,7 +28,7 @@ func New(apiHost string, apiEmail string, apiToken string) (*MyJiraClient, error
 
 	jiraClient, err := gojira.NewClient(tp.Client(), apiHost)
 	if err != nil {
-		return nil, xerrors.Errorf("an error occurred: %w", err)
+		return nil, xerrors.Errorf("an error occurred while creating the go-jira client: %w", err)
 	}
 
 	myJiraClient := MyJiraClient{jiraClient}
