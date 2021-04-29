@@ -3,49 +3,58 @@ package bot
 import (
 	"log"
 
-	"reacjira/bot/handler"
 	"reacjira/config"
+	"reacjira/service"
 
 	"github.com/slack-go/slack"
+	goslack "github.com/slack-go/slack"
 )
 
 type Bot struct {
-	commandHandler *handler.CommandHandler
+	config  BotConfig
+	handler *CommandHandler
 }
 
-// Run activate bot routine
-func Run(api *slack.Client, slackCtx config.SlackCtx, jiraCtx config.JiraCtx, reacjiras []config.Reacjira) int {
-	rtm := api.NewRTM()
+type BotConfig struct {
+	Slack     service.SlackConfig
+	Jira      service.JiraConfig
+	Reacjiras *config.Reacjiras
+}
+
+type Profile struct {
+	ID   string
+	Name string
+}
+
+// Run returns int which means an error code.
+func Run(config BotConfig) int {
+	rtm := goslack.New(config.Slack.Token).NewRTM()
 	go rtm.ManageConnection()
 
-	// initialized when connected
 	var bot *Bot
-
 	for msg := range rtm.IncomingEvents {
 		switch ev := msg.Data.(type) {
-		case *slack.HelloEvent:
-			log.Print("hello")
-		case *slack.ConnectedEvent:
-			log.Print("connected")
-			handler, err := handler.NewCommandHandler(
+		case *goslack.HelloEvent:
+			log.Print("A helloEvent was arrived")
+		case *goslack.ConnectedEvent:
+			log.Print("A connection to Slack has been established. Start initialization of the handler.")
+			handler, err := NewCommandHandler(
 				rtm,
-				slackCtx,
-				jiraCtx,
-				config.Profile{
+				config,
+				Profile{
 					ID:   ev.Info.User.ID,
 					Name: ev.Info.User.Name,
 				},
-				reacjiras,
 			)
 			if err != nil {
 				log.Fatalf("an error occurred while initilizing CommandHandler. %+v", err)
 			}
-			bot = &Bot{commandHandler: handler}
+			bot = &Bot{config: config, handler: handler}
 		case *slack.InvalidAuthEvent:
-			log.Printf("Invalid credentials. %v", ev)
+			log.Printf("Invalid credentials. %+v", ev)
 			return 1
 		case *slack.ReactionAddedEvent:
-			bot.commandHandler.HandleCommand(ev)
+			bot.handler.HandleCommand(ev)
 		}
 	}
 	return 1
