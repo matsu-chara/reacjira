@@ -1,9 +1,7 @@
 package service
 
 import (
-	"math"
 	"reacjira/slack"
-	"strings"
 
 	goslack "github.com/slack-go/slack"
 	"golang.org/x/xerrors"
@@ -69,15 +67,10 @@ func (slackService *SlackService) CollectReactedMessageAttributes(msg *goslack.M
 	if err != nil {
 		return nil, xerrors.Errorf("can't find permLink: %w", err)
 	}
-
-	title := strings.Replace(msg.Text, "\n", " ", -1)
-	limit := int(math.Min(float64(len(title)), 200))
-	title = title[0:limit]
-
 	return &Reacted{
 		reactedUser,
 		Message{
-			title,
+			msg.Text,
 			link,
 			channel,
 		},

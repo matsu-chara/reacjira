@@ -3,6 +3,8 @@ package bot
 import (
 	"fmt"
 	"log"
+	"math"
+	"strings"
 
 	"github.com/slack-go/slack"
 	"golang.org/x/xerrors"
@@ -39,7 +41,7 @@ func NewCommandHandler(
 }
 
 func (commandHandler *CommandHandler) HandleCommand(ev *slack.ReactionAddedEvent) {
-	reacjira := commandHandler.searchReacjira(ev.Reaction)
+	reacjira := commandHandler.botConfig.Reacjiras.Find(ev.Reaction)
 	if reacjira == nil {
 		// if a reacjira was not found, ignore this event.
 		return
@@ -48,20 +50,8 @@ func (commandHandler *CommandHandler) HandleCommand(ev *slack.ReactionAddedEvent
 	commandHandler.createTicket(ev, *reacjira)
 }
 
-// search reacjira which has the same name with the argument.
-func (commandHandler *CommandHandler) searchReacjira(reaction string) *config.Reacjira {
-	for _, r := range commandHandler.botConfig.Reacjiras.Values {
-		if r.Emoji == reaction {
-			return &r
-		}
-	}
-
-	return nil
-}
-
 func (commandHandler *CommandHandler) createTicket(ev *slack.ReactionAddedEvent, reacjira config.Reacjira) {
-	log.Printf("A slack reaction was received: channel: %s, timestamp: %s, user: %s", ev.Item.Channel, ev.Item.Timestamp, ev.User)
-	log.Printf("prepare to create a ticket %+v", reacjira)
+	log.Printf("A slack reaction was received: channel: %s, timestamp: %s, user: %s. The target reacjira is %+v", ev.Item.Channel, ev.Item.Timestamp, ev.User, reacjira)
 
 	msg, err := commandHandler.slack.FindMessage(ev)
 	if err != nil {
@@ -78,26 +68,22 @@ func (commandHandler *CommandHandler) createTicket(ev *slack.ReactionAddedEvent,
 		replyTo = msg.Timestamp
 	}
 
-	for _, reaction := range msg.Reactions {
-		if reaction.Name == reacjira.Emoji && reaction.Count > 1 {
-			log.Printf("multiple reacjira reactions were found(%s, %d). skip", reaction.Name, reaction.Count)
-			return
-		}
+	if doesReactedMultipleTime(reacjira, msg) {
+		log.Printf("multiple reacjira reactions were found (%s). skip", reacjira.Emoji)
+		return
 	}
 
 	reacted, err := commandHandler.slack.CollectReactedMessageAttributes(msg, ev)
 	if err != nil {
 		log.Printf("CollectReactedMessageAttributes error: %+v", err)
 		if msg != nil {
-			commandHandler.slack.SendError(err, ev.Item.Channel, msg.ThreadTimestamp)
+			commandHandler.slack.SendError(err, ev.Item.Channel, replyTo)
 		}
 		return
 	}
-	description := fmt.Sprintf(`auto generated
-from: %s
-at: %s
-%s`, reacted.Message.Link, reacted.Message.Channel.Name, reacjira.Description)
-	log.Printf("reporter:%s, channel: %s, title: %s", reacted.ReactedUser.Name, reacted.Message.Channel.Name, reacted.Message.Text)
+
+	message := formatMessage(reacted.Message.Text)
+	description := buildDescription(reacted, reacjira)
 
 	log.Printf("attempt to create a ticket.")
 	ticketRequest := service.TicketRequest{
@@ -105,7 +91,7 @@ at: %s
 		IssueType:     reacjira.IssueType,
 		EpicKey:       reacjira.EpicKey,
 		ReporterEmail: reacted.ReactedUser.Profile.Email,
-		Title:         reacted.Message.Text,
+		Title:         message,
 		Description:   description,
 	}
 	ticketURL, err := commandHandler.jira.CreateTicket(ticketRequest)
@@ -118,4 +104,28 @@ at: %s
 	}
 
 	commandHandler.slack.SendMessage(ticketURL, ev.Item.Channel, replyTo)
+}
+
+func doesReactedMultipleTime(reacjira config.Reacjira, msg *slack.Message) bool {
+	for _, reaction := range msg.Reactions {
+		if reaction.Name == reacjira.Emoji && reaction.Count > 1 {
+			return true
+		}
+	}
+	return false
+}
+
+const messageLimit = 200
+
+func formatMessage(message string) string {
+	str := strings.Replace(message, "\n", " ", -1)
+	limit := int(math.Min(float64(len(message)), messageLimit))
+	return str[0:limit]
+}
+
+func buildDescription(reacted *service.Reacted, reacjira config.Reacjira) string {
+	return fmt.Sprintf(`auto generated
+	from: %s
+	at: %s
+	%s`, reacted.Message.Link, reacted.Message.Channel.Name, reacjira.Description)
 }
