@@ -3,8 +3,6 @@ package bot
 import (
 	"fmt"
 	"log"
-	"math"
-	"strings"
 
 	"github.com/slack-go/slack"
 	"golang.org/x/xerrors"
@@ -52,7 +50,7 @@ func (commandHandler *CommandHandler) HandleCommand(ev *slack.ReactionAddedEvent
 
 // search reacjira which has the same name with the argument.
 func (commandHandler *CommandHandler) searchReacjira(reaction string) *config.Reacjira {
-	for _, r := range commandHandler.botConfig.Reacjiras {
+	for _, r := range commandHandler.botConfig.Reacjiras.Values {
 		if r.Emoji == reaction {
 			return &r
 		}
@@ -65,15 +63,16 @@ func (commandHandler *CommandHandler) createTicket(ev *slack.ReactionAddedEvent,
 	log.Printf("A slack reaction was received: channel: %s, timestamp: %s, user: %s", ev.Item.Channel, ev.Item.Timestamp, ev.User)
 	log.Printf("prepare to create a ticket %+v", reacjira)
 
-	// fetch slack message
-	msg, err := findMessage(commandHandler.slack, ev)
+	msg, err := commandHandler.slack.FindMessage(ev)
 	if err != nil {
-		log.Printf("findMessage error: %+v", err)
+		log.Printf("FindMessage error: %+v", err)
 		if msg != nil {
-			commandHandler.slack.SendMessage(err.Error(), ev.Item.Channel, msg.ThreadTimestamp)
+			commandHandler.slack.SendError(err, ev.Item.Channel, msg.ThreadTimestamp)
 		}
 		return
 	}
+	log.Printf("slack message search finish: %s, %s, %s, reply:%d", msg.User, msg.Text, msg.Timestamp, msg.ReplyCount)
+
 	var replyTo = msg.ThreadTimestamp
 	if msg.ThreadTimestamp == "" {
 		replyTo = msg.Timestamp
@@ -86,44 +85,27 @@ func (commandHandler *CommandHandler) createTicket(ev *slack.ReactionAddedEvent,
 		}
 	}
 
-	reporter, err := commandHandler.slack.SearchUser(msg.User)
+	reacted, err := commandHandler.slack.CollectReactedMessageAttributes(msg, ev)
 	if err != nil {
-		log.Printf("searchUser error: %+v", err)
-		commandHandler.slack.SendMessages([]string{err.Error()}, ev.Item.Channel, replyTo)
+		log.Printf("CollectReactedMessageAttributes error: %+v", err)
+		if msg != nil {
+			commandHandler.slack.SendError(err, ev.Item.Channel, msg.ThreadTimestamp)
+		}
 		return
 	}
-
-	channel, err := commandHandler.slack.SearchChannel(ev.Item.Channel)
-	if err != nil {
-		log.Printf("searchChannel error: %+v", err)
-		commandHandler.slack.SendMessages([]string{err.Error()}, ev.Item.Channel, replyTo)
-		return
-	}
-
-	link, err := getPermLink(commandHandler.slack, ev, msg)
-	if err != nil {
-		log.Printf("getPermLink error: %+v", err)
-		commandHandler.slack.SendMessages([]string{err.Error()}, ev.Item.Channel, replyTo)
-		return
-	}
-
-	title := strings.Replace(msg.Text, "\n", " ", -1)
-	limit := int(math.Min(float64(len(title)), 200))
-	title = title[0:limit]
-
 	description := fmt.Sprintf(`auto generated
 from: %s
 at: %s
-%s`, link, channel.Name, reacjira.Description)
-	log.Printf("reporter:%s, channel: %s, title: %s", reporter.Name, channel.Name, title)
+%s`, reacted.Message.Link, reacted.Message.Channel.Name, reacjira.Description)
+	log.Printf("reporter:%s, channel: %s, title: %s", reacted.ReactedUser.Name, reacted.Message.Channel.Name, reacted.Message.Text)
 
 	log.Printf("attempt to create a ticket.")
 	ticketRequest := service.TicketRequest{
 		Project:       reacjira.Project,
 		IssueType:     reacjira.IssueType,
 		EpicKey:       reacjira.EpicKey,
-		ReporterEmail: reporter.Profile.Email,
-		Title:         title,
+		ReporterEmail: reacted.ReactedUser.Profile.Email,
+		Title:         reacted.Message.Text,
 		Description:   description,
 	}
 	ticketURL, err := commandHandler.jira.CreateTicket(ticketRequest)
@@ -131,31 +113,9 @@ at: %s
 
 	if err != nil {
 		log.Printf("createTicket error: %+v", err)
-		commandHandler.slack.SendMessages([]string{err.Error()}, ev.Item.Channel, replyTo)
+		commandHandler.slack.SendError(err, ev.Item.Channel, replyTo)
 		return
 	}
 
-	commandHandler.slack.SendMessages([]string{ticketURL}, ev.Item.Channel, replyTo)
-}
-
-func findMessage(slack *service.SlackService, ev *slack.ReactionAddedEvent) (*slack.Message, error) {
-	msg, err := slack.SearchMsg(ev.Item.Channel, ev.Item.Timestamp)
-	if err != nil {
-		log.Printf("findMessage error: %+v", err)
-		return nil, err
-	}
-
-	log.Printf("slack message search finish: %s, %s, %s, reply:%d", msg.User, msg.Text, msg.Timestamp, msg.ReplyCount)
-	return msg, nil
-}
-
-func getPermLink(slack *service.SlackService, ev *slack.ReactionAddedEvent, msg *slack.Message) (string, error) {
-	link, err := slack.GetPermLink(ev.Item.Channel, msg.Timestamp)
-	if err != nil {
-		log.Printf("getPermLink error: %+v", err)
-		return "", err
-	}
-
-	log.Printf("got slack permlink: %s", link)
-	return link, nil
+	commandHandler.slack.SendMessage(ticketURL, ev.Item.Channel, replyTo)
 }

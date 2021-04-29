@@ -18,7 +18,6 @@ type JiraService struct {
 	client jiraClient
 }
 
-// an interface of a jira client
 type jiraClient interface {
 	FindUserByEmail(email string) (*jira.User, error)
 	FindEpicIDByEpicKey(epicKey string) (*jira.Epic, error)
@@ -28,7 +27,7 @@ type jiraClient interface {
 func NewJira(config JiraConfig) (*JiraService, error) {
 	client, err := jira.New(config.Host, config.Email, config.Token)
 	if err != nil {
-		return nil, xerrors.Errorf("an error occurred: %w", err)
+		return nil, xerrors.Errorf("an error occurred while initializiong jira client: %w", err)
 	}
 	return &JiraService{config, client}, nil
 }

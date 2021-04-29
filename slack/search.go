@@ -5,7 +5,7 @@ import (
 	"golang.org/x/xerrors"
 )
 
-func (client *SlackClient) SearchMsg(channel string, timestamp string) (*goslack.Message, error) {
+func (client *SlackClient) SearchMessage(channel string, timestamp string) (*goslack.Message, error) {
 	result, _, _, err := client.rtm.GetConversationReplies(
 		&goslack.GetConversationRepliesParameters{
 			ChannelID: channel,
@@ -29,8 +29,7 @@ func (client *SlackClient) SearchUser(userId string) (*goslack.User, error) {
 	return client.rtm.GetUserInfo(userId)
 }
 
-// suppress lint error because slack-go/slack v0.8.2 returns deprecated struct as a new API response.
-func (client *SlackClient) SearchChannel(channelId string) (*goslack.Channel, error) { //nolint:staticcheck
+func (client *SlackClient) SearchChannel(channelId string) (*goslack.Channel, error) {
 	return client.rtm.GetConversationInfo(channelId, false)
 }
 

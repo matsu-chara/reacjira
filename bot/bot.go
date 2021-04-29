@@ -18,7 +18,7 @@ type Bot struct {
 type BotConfig struct {
 	Slack     service.SlackConfig
 	Jira      service.JiraConfig
-	Reacjiras []config.Reacjira
+	Reacjiras *config.Reacjiras
 }
 
 type Profile struct {
@@ -26,17 +26,16 @@ type Profile struct {
 	Name string
 }
 
+// Run returns int which means an error code.
 func Run(config BotConfig) int {
 	rtm := goslack.New(config.Slack.Token).NewRTM()
 	go rtm.ManageConnection()
 
-	// it will be initialized when slack RTM is connected
 	var bot *Bot
-
 	for msg := range rtm.IncomingEvents {
 		switch ev := msg.Data.(type) {
 		case *goslack.HelloEvent:
-			log.Print("a helloEvent was arrived")
+			log.Print("A helloEvent was arrived")
 		case *goslack.ConnectedEvent:
 			log.Print("A connection to Slack has been established. Start initialization of the handler.")
 			handler, err := NewCommandHandler(

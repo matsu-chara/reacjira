@@ -12,7 +12,7 @@ import (
 func main() {
 	log.Println("start reacjira.")
 
-	config, err := loadConfig("REACJIRA_CONFIG_NAME", "config.toml")
+	config, err := loadTomlConfig("REACJIRA_CONFIG_NAME", "config.toml")
 	if err != nil {
 		log.Fatalf("an error occurred while loading a config. %+v", err)
 	}
@@ -30,11 +30,8 @@ func main() {
 	os.Exit(bot.Run(botConfig))
 }
 
-func loadConfig(configEnvName string, defaultFileName string) (*config.TomlConfig, error) {
-	configName := os.Getenv(configEnvName)
-	if configName == "" {
-		configName = defaultFileName
-	}
+func loadTomlConfig(configEnvName string, defaultFileName string) (*config.TomlConfig, error) {
+	configName := envGetOrElse(configEnvName, defaultFileName)
 
 	log.Printf("start reading a config from %s.", configName)
 	loadedConfig, err := config.LoadConfigToml(configName)
@@ -45,17 +42,22 @@ func loadConfig(configEnvName string, defaultFileName string) (*config.TomlConfi
 	return loadedConfig, nil
 }
 
-func loadReacjiraToml(configEnvName string, defaultFileName string) ([]config.Reacjira, error) {
-	reacjiraName := os.Getenv(configEnvName)
-	if reacjiraName == "" {
-		reacjiraName = defaultFileName
-	}
+func loadReacjiraToml(configEnvName string, defaultFileName string) (*config.Reacjiras, error) {
+	reacjiraName := envGetOrElse(configEnvName, defaultFileName)
 
 	log.Printf("start reading reacjiras from %s.", reacjiraName)
 	reacjiras, err := config.LoadReacjiraToml(reacjiraName)
 	if err != nil {
 		return nil, xerrors.Errorf("an error occurred while reading reacjiras toml: %w", err)
 	}
-	log.Printf("finish reading a config from %s.", reacjiraName)
+	log.Printf("finish reading reacjiras from %s.", reacjiraName)
 	return reacjiras, nil
+}
+
+func envGetOrElse(envName string, defaultValue string) string {
+	v := os.Getenv(envName)
+	if v == "" {
+		return defaultValue
+	}
+	return v
 }

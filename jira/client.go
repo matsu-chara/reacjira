@@ -12,13 +12,13 @@ type JiraClient struct {
 
 func New(apiHost string, apiEmail string, apiToken string) (*JiraClient, error) {
 	if apiHost == "" {
-		return nil, xerrors.Errorf("an error occurred. an apiHost was empty")
+		return nil, xerrors.Errorf("an error occurred. An apiHost was empty")
 	}
 	if apiEmail == "" {
-		return nil, xerrors.Errorf("an error occurred. an apiEmail was empty")
+		return nil, xerrors.Errorf("an error occurred. An apiEmail was empty")
 	}
 	if apiToken == "" {
-		return nil, xerrors.Errorf("an error occurred. an apiToken was empty")
+		return nil, xerrors.Errorf("an error occurred. An apiToken was empty")
 	}
 
 	tp := gojira.BasicAuthTransport{

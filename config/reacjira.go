@@ -7,8 +7,8 @@ import (
 	"golang.org/x/xerrors"
 )
 
-type reacjiras struct {
-	Reacjiras []Reacjira `toml:"reacjiras"`
+type Reacjiras struct {
+	Values []Reacjira `toml:"reacjiras"`
 }
 
 type Reacjira struct {
@@ -19,13 +19,13 @@ type Reacjira struct {
 	Description string `toml:"description"`
 }
 
-func LoadReacjiraToml(filename string) ([]Reacjira, error) {
+func LoadReacjiraToml(filename string) (*Reacjiras, error) {
 	log.Printf("try to load reacjira from %s", filename)
 
-	var reacjiras reacjiras
+	var reacjiras Reacjiras
 	if _, err := toml.DecodeFile(filename, &reacjiras, "ap-northeast-1"); err != nil {
 		return nil, xerrors.Errorf("failed to load reacjira toml from %s: %w", filename, err)
 	}
 
-	return reacjiras.Reacjiras, nil
+	return &reacjiras, nil
 }
