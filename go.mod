@@ -10,7 +10,7 @@ require (
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/sioncojp/tomlssm v0.0.0-20180919091825-b922b3354665
-	github.com/slack-go/slack v0.9.1
+	github.com/slack-go/slack v0.9.3
 	github.com/stretchr/testify v1.5.0 // indirect
 	github.com/trivago/tgo v1.0.7 // indirect
 	golang.org/x/net v0.0.0-20190923162816-aa69164e4478 // indirect
