@@ -29,3 +29,12 @@ func LoadReacjiraToml(filename string) (*Reacjiras, error) {
 
 	return &reacjiras, nil
 }
+
+func (reacjiras Reacjiras) Find(candidate string) *Reacjira {
+	for _, r := range reacjiras.Values {
+		if r.Emoji == candidate {
+			return &r
+		}
+	}
+	return nil
+}
