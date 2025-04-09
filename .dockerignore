@@ -1,1 +1,5 @@
+reacjira
+*.test
+.idea
 vendor
+.vscode

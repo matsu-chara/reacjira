@@ -1,3 +1,9 @@
-reacjiras = [
-    {emoji = "test_task", project = "TEST", issue_type = "タスク", epic_key="FOO-1234", description="created from reacjira."}
-]
+[[reacjiras]]
+emoji = "test_task" # required
+project = "TEST" # required
+issue_type = "Task" # required
+epic_key = "FOO-1234"
+description = """h2. foo
+bar
+"""
+slack_message = ""

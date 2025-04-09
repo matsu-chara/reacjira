@@ -1,8 +1,11 @@
+# at first, please copy this file to config.secret.toml and edit the values
+
 # slack
 slack_host = "https://<your-slack-team>.slack.com"
-slack_token = "<your-token>"
+slack_bot_token = "<your-bot-token>" # a token which starts with "xoxb-"
+slack_app_token = "<your-app-token>"  # a token which starts with "xapp-"
 
-# etc
+ # jira
 jira_host = "https://<your-jira>.atlassian.net"
 jira_email = "<your-jira-email>"
 jira_token = "<your-jira-token>"
