@@ -114,7 +114,7 @@ func (commandHandler *CommandHandler) createTicket(ev *slackevents.ReactionAdded
 	}
 
 	// チケットタイトルは発言 (改行を除去し、200文字までにする)
-	title := strings.Replace(msg.Text, "\n", " ", -1)
+	title := strings.ReplaceAll(msg.Text, "\n", " ")
 	limit := int(math.Min(float64(len(title)), 200))
 	title = title[0:limit]
 
