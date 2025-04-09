@@ -1,61 +1,81 @@
 package bot
 
 import (
+	"fmt"
 	"log"
 
+	"reacjira/bot/handler"
 	"reacjira/config"
-	"reacjira/service"
 
 	"github.com/slack-go/slack"
-	goslack "github.com/slack-go/slack"
+	"github.com/slack-go/slack/slackevents"
+	"github.com/slack-go/slack/socketmode"
 )
 
-type Bot struct {
-	config  BotConfig
-	handler *CommandHandler
-}
-
-type BotConfig struct {
-	Slack     service.SlackConfig
-	Jira      service.JiraConfig
-	Reacjiras *config.Reacjiras
-}
-
-type Profile struct {
-	ID   string
-	Name string
-}
-
-// Run returns int which means an error code.
-func Run(config BotConfig) int {
-	rtm := goslack.New(config.Slack.Token).NewRTM()
-	go rtm.ManageConnection()
-
-	var bot *Bot
-	for msg := range rtm.IncomingEvents {
-		switch ev := msg.Data.(type) {
-		case *goslack.HelloEvent:
-			log.Print("A helloEvent was arrived")
-		case *goslack.ConnectedEvent:
-			log.Print("A connection to Slack has been established. Start initialization of the handler.")
-			handler, err := NewCommandHandler(
-				rtm,
-				config,
-				Profile{
-					ID:   ev.Info.User.ID,
-					Name: ev.Info.User.Name,
-				},
-			)
-			if err != nil {
-				log.Fatalf("an error occurred while initilizing CommandHandler. %+v", err)
-			}
-			bot = &Bot{config: config, handler: handler}
-		case *slack.InvalidAuthEvent:
-			log.Printf("Invalid credentials. %+v", ev)
-			return 1
-		case *slack.ReactionAddedEvent:
-			bot.handler.HandleCommand(ev)
-		}
+// GetSlackBotInfo get slack bot info
+func GetSlackBotInfo(api *slack.Client) (config.BotProfile, error) {
+	resp, err := api.AuthTest()
+	if err != nil {
+		return config.BotProfile{}, fmt.Errorf("an error occurred during authTest api call: %w", err)
 	}
-	return 1
+	return config.BotProfile{
+		BotUserID: resp.UserID,
+		BotName:   resp.User}, nil
+}
+
+// Run activate bot routine
+func Run(slackClient *slack.Client, slackCtx config.SlackCtx, jiraCtx config.JiraCtx, botProfile config.BotProfile, reacjiras []config.Reacjira) int {
+	slackSocket := socketmode.New(
+		slackClient,
+		socketmode.OptionDebug(false),
+	)
+
+	commandHandler := handler.NewCommandHandler(
+		slackClient,
+		slackCtx,
+		jiraCtx,
+		botProfile,
+		reacjiras,
+	)
+
+	go func() {
+		for evt := range slackSocket.Events {
+			switch evt.Type {
+			case socketmode.EventTypeConnecting:
+				log.Println("Connecting to Slack with Socket Mode...")
+			case socketmode.EventTypeConnectionError:
+				log.Println("Connection failed. Retrying later...")
+			case socketmode.EventTypeConnected:
+				log.Println("Connected to Slack with Socket Mode.")
+			case socketmode.EventTypeEventsAPI:
+				eventsAPIEvent, ok := evt.Data.(slackevents.EventsAPIEvent)
+				if !ok {
+					log.Printf("failed to cast Data to EventsAPIEvent. %+v\n", evt)
+					continue
+				}
+				slackSocket.Ack(*evt.Request) // we must return an ack within 3 seconds or Slack will retry
+
+				switch eventsAPIEvent.Type {
+				case slackevents.CallbackEvent:
+					innerEvent := eventsAPIEvent.InnerEvent
+					switch ev := innerEvent.Data.(type) {
+					case *slackevents.ReactionAddedEvent:
+						commandHandler.HandleCommand(ev)
+					}
+				default:
+					log.Printf("unsupported Events API event received: %v\n", eventsAPIEvent)
+				}
+			default:
+				// 全く関係ないイベントなども全部ログに出てしまうので普段はコメントアウトしておく
+				// log.Printf("Unexpected Event(Ignored): %v\n", msg.Data)
+			}
+		}
+	}()
+
+	err := slackSocket.Run()
+	if err != nil {
+		log.Printf("failed to run slack socket mode: %v\n", err)
+		return 1
+	}
+	return 0
 }

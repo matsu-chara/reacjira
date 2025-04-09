@@ -1,17 +1,17 @@
 package config
 
 import (
+	"fmt"
 	"log"
-	"reacjira/service"
 
 	toml "github.com/sioncojp/tomlssm"
-	"golang.org/x/xerrors"
 )
 
-type TomlConfig struct {
+type Config struct {
 	// slack
-	SlackHost  string `toml:"slack_host"`
-	SlackToken string `toml:"slack_token"`
+	SlackHost     string `toml:"slack_host"`
+	SlackBotToken string `toml:"slack_bot_token"`
+	SlackAppToken string `toml:"slack_app_token"`
 
 	// jira
 	JiraHost  string `toml:"jira_host"`
@@ -19,28 +19,27 @@ type TomlConfig struct {
 	JiraToken string `toml:"jira_token"`
 }
 
-func LoadConfigToml(filename string) (*TomlConfig, error) {
+func LoadConfigToml(filename string) (*Config, error) {
 	log.Printf("try to load config from %s", filename)
 
-	var config TomlConfig
+	var config Config
 	if _, err := toml.DecodeFile(filename, &config, "ap-northeast-1"); err != nil {
-		return nil, xerrors.Errorf("failed to load config toml from %s: %w", filename, err)
+		return nil, fmt.Errorf("failed to load config toml from %s: %w", filename, err)
 	}
 
 	return &config, nil
 }
 
-func (c TomlConfig) ToJiraConfig() service.JiraConfig {
-	return service.JiraConfig{
+func (c Config) ToJiraCtx() JiraCtx {
+	return JiraCtx{
 		Host:  c.JiraHost,
 		Email: c.JiraEmail,
 		Token: c.JiraToken,
 	}
 }
 
-func (c TomlConfig) ToSlackConfig() service.SlackConfig {
-	return service.SlackConfig{
+func (c Config) ToSlackCtx() SlackCtx {
+	return SlackCtx{
 		Host: c.SlackHost,
-		Token: c.SlackToken,
 	}
 }

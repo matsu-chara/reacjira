@@ -6,58 +6,52 @@ import (
 	"reacjira/bot"
 	"reacjira/config"
 
-	"golang.org/x/xerrors"
+	"github.com/slack-go/slack"
 )
 
 func main() {
 	log.Println("start reacjira.")
 
-	config, err := loadTomlConfig("REACJIRA_CONFIG_NAME", "config.toml")
-	if err != nil {
-		log.Fatalf("an error occurred while loading a config. %+v", err)
+	configName := os.Getenv("REACJIRA_CONFIG_NAME")
+	if configName == "" {
+		configName = "config.toml"
 	}
 
-	reacjiras, err := loadReacjiraToml("REACJIRA_REACJIRA_NAME", "reacjira.toml")
-	if err != nil {
-		log.Fatalf("an error occurred while loading reacjiras. %+v", err)
-	}
-
-	botConfig := bot.BotConfig{
-		Slack:     config.ToSlackConfig(),
-		Jira:      config.ToJiraConfig(),
-		Reacjiras: reacjiras,
-	}
-	os.Exit(bot.Run(botConfig))
-}
-
-func loadTomlConfig(configEnvName string, defaultFileName string) (*config.TomlConfig, error) {
-	configName := envGetOrElse(configEnvName, defaultFileName)
-
-	log.Printf("start reading a config from %s.", configName)
+	log.Printf("start reading %s.", configName)
 	loadedConfig, err := config.LoadConfigToml(configName)
 	if err != nil {
-		return nil, xerrors.Errorf("an error occurred while reading toml config: %w", err)
+		log.Printf("failed to load config: %s", err)
+		os.Exit(1)
 	}
-	log.Printf("finish reading a config from %s.", configName)
-	return loadedConfig, nil
-}
+	log.Printf("finish reading %s.", configName)
 
-func loadReacjiraToml(configEnvName string, defaultFileName string) (*config.Reacjiras, error) {
-	reacjiraName := envGetOrElse(configEnvName, defaultFileName)
-
-	log.Printf("start reading reacjiras from %s.", reacjiraName)
-	reacjiras, err := config.LoadReacjiraToml(reacjiraName)
+	reacjiraToml := os.Getenv("REACJIRA_REACJIRA_NAME")
+	if reacjiraToml == "" {
+		reacjiraToml = "reacjira.toml"
+	}
+	log.Printf("start reading %s.", reacjiraToml)
+	reacjiras, err := config.LoadReacjiraToml(reacjiraToml)
 	if err != nil {
-		return nil, xerrors.Errorf("an error occurred while reading reacjiras toml: %w", err)
+		log.Printf("failed to load reacjira: %s", err)
+		os.Exit(1)
 	}
-	log.Printf("finish reading reacjiras from %s.", reacjiraName)
-	return reacjiras, nil
-}
+	log.Printf("finish reading %s.", configName)
 
-func envGetOrElse(envName string, defaultValue string) string {
-	v := os.Getenv(envName)
-	if v == "" {
-		return defaultValue
+	slackClient := slack.New(
+		loadedConfig.SlackBotToken,
+		slack.OptionAppLevelToken(loadedConfig.SlackAppToken),
+		slack.OptionDebug(false),
+	)
+
+	botProfile, err := bot.GetSlackBotInfo(slackClient)
+	if err != nil {
+		log.Printf("failed to get bot info: %v", err)
+		os.Exit(1)
 	}
-	return v
+	log.Printf("got a bot info %v\n", botProfile)
+
+	slackCtx := loadedConfig.ToSlackCtx()
+	jiraCtx := loadedConfig.ToJiraCtx()
+
+	os.Exit(bot.Run(slackClient, slackCtx, jiraCtx, botProfile, reacjiras))
 }

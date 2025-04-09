@@ -6,11 +6,23 @@ reacjira = emoji reaction + jira ticket create
 
 ### prepare
 
-add a configuration like `{emoji = "test_task", project = "TEST", issue_type = "タスク", epic_key="FOO-1234", description="created from reacjira."}` to `reacjira.toml`.
+add a configuration like below to the `reacjira.toml` file.
+
+```toml
+[[reacjiras]]
+emoji = "test_task"
+project = "TEST"
+issue_type = "Task"
+epic_key = "FOO-1234"
+description = """h2. foo
+bar
+"""
+slack_message = ""
+```
 
 ### creating jira tickets
 
-if you add an emoji reaction (e.g. :test_task:) to slack messege, reacjira will create a jira ticket in "Test" Project as IssueType="タスク".
+if you add an emoji reaction (e.g. :test_task:) to slack messege, reacjira will create a jira ticket in "Test" Project as IssueType="Task".
 
 ![image](https://user-images.githubusercontent.com/1635885/111093000-0ff33200-857b-11eb-949b-357edda881d8.png)
 
