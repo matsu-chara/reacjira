@@ -3,7 +3,7 @@ module reacjira
 go 1.24.0
 
 require (
-	github.com/andygrunwald/go-jira v1.16.0
+	github.com/andygrunwald/go-jira v1.16.1
 	github.com/davecgh/go-spew v1.1.1
 	github.com/sioncojp/tomlssm v0.0.0-20190709185015-f14095899c13
 	github.com/slack-go/slack v0.17.3
